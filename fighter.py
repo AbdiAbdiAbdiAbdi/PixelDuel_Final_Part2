@@ -52,99 +52,97 @@ class Fighter():
         self.running = False
         #self.attack_type = 0
 
-
         #get keypress
         key = pygame.key.get_pressed()
 
-        #player1
-        if self.player == 1:
-            #can only do the following if not attacing
-            if self.attacking == False and self.life and not round_over:
-                #movement keys
-                if key[pygame.K_a]:
-                    dx = -SPEED
-                    self.running = True
-                if key[pygame.K_d]:
-                    dx = SPEED
-                    self.running = True
-                
-                #jump
-                #TODO add Double Jump
-                if key[pygame.K_w] and self.jump == False:
-                    self.vel_y = -30
-                    self.jump = True
-                    self.jump_sound.play()
-                
-                #attack key
-                if key[pygame.K_q] or key[pygame.K_e]:
-                    self.attack(surface, target)
-                    if key[pygame.K_q]:
-                        self.attack_type = 1
+        # Only process input and movement if alive and round not over
+        if self.life and not round_over:
+            #player1
+            if self.player == 1:
+                #can only do the following if not attacing
+                if self.attacking == False:
+                    #movement keys
+                    if key[pygame.K_a]:
+                        dx = -SPEED
+                        self.running = True
+                    if key[pygame.K_d]:
+                        dx = SPEED
+                        self.running = True
                     
-                    if key[pygame.K_e]:
-                        self.attack_type = 2
-        #player2
-        if self.player == 2:
-            #can only do the following if not attacing
-            if self.attacking == False and self.life and not round_over:
-                #movement keys
-                if key[pygame.K_LEFT]:
-                    dx = -SPEED
-                    self.running = True
-                if key[pygame.K_RIGHT]:
-                    dx = SPEED
-                    self.running = True
-                
-                #jump
-                #TODO add Double Jump
-                if key[pygame.K_UP] and self.jump == False:
-                    self.vel_y = -30
-                    self.jump = True
-                    self.jump_sound.play()
-                
-                #attack key
-                if key[pygame.K_n] or key[pygame.K_m]:
-                    self.attack(surface, target)
-                    if key[pygame.K_n]:
-                        self.attack_type = 1
+                    #jump
+                    #TODO add Double Jump
+                    if key[pygame.K_w] and self.jump == False:
+                        self.vel_y = -30
+                        self.jump = True
+                        self.jump_sound.play()
                     
-                    if key[pygame.K_m]:
-                        self.attack_type = 2
+                    #attack key
+                    if key[pygame.K_q] or key[pygame.K_e]:
+                        self.attack(surface, target)
+                        if key[pygame.K_q]:
+                            self.attack_type = 1
+                        
+                        if key[pygame.K_e]:
+                            self.attack_type = 2
+            #player2
+            if self.player == 2:
+                #can only do the following if not attacing
+                if self.attacking == False:
+                    #movement keys
+                    if key[pygame.K_LEFT]:
+                        dx = -SPEED
+                        self.running = True
+                    if key[pygame.K_RIGHT]:
+                        dx = SPEED
+                        self.running = True
+                    
+                    #jump
+                    #TODO add Double Jump
+                    if key[pygame.K_UP] and self.jump == False:
+                        self.vel_y = -30
+                        self.jump = True
+                        self.jump_sound.play()
+                    
+                    #attack key
+                    if key[pygame.K_n] or key[pygame.K_m]:
+                        self.attack(surface, target)
+                        if key[pygame.K_n]:
+                            self.attack_type = 1
+                        
+                        if key[pygame.K_m]:
+                            self.attack_type = 2
 
-            
-
-
-        #applyin gravity
+        # ALWAYS apply gravity - even when dead
         self.vel_y += GRAVITY
         dy += self.vel_y
 
-        #make sure play stays on screen
-        if self.rect.left + dx < 0:
-            dx = -self.rect.left
-
-        if self.rect.right + dx > 1000:
-            dx = screen_width - self.rect.right
-        
+        # ALWAYS check ground collision - even when dead  
         if self.rect.bottom + dy > screen_height - 21:
             self.vel_y = 0
             self.jump = False
             dy = screen_height - 21 - self.rect.bottom
 
-        #make sure players face each other
-        self.update_flip(target)
+        # Only apply horizontal movement and screen bounds if alive
+        if self.life and not round_over:
+            #make sure play stays on screen
+            if self.rect.left + dx < 0:
+                dx = -self.rect.left
 
-        #applys attac cooldown
+            if self.rect.right + dx > 1000:
+                dx = screen_width - self.rect.right
 
+            #make sure players face each other
+            self.update_flip(target)
+
+        # ALWAYS apply attack cooldown
         if self.attack_cooldown > 0:
             self.attack_cooldown -= 1
 
+        # Apply position updates
+        if self.life and not round_over:
+            self.rect.x += dx  # Only move horizontally if alive
         
-
-
-        #update player postion
-        self.rect.x += dx
-
-        self.rect.y += dy
+        self.rect.y += dy  # ALWAYS apply vertical movement (gravity/falling)
 
 
     def update_flip(self, target):
@@ -202,13 +200,6 @@ class Fighter():
                     #if player was attacking, then attack is stopped
                     self.attacking = False
                     self.attack_cooldown = 50
-            """
-            #check if an attack was executed
-            if self.action == 3 or self.action == 4:
-                self.attacking = False
-                self.attack_cooldown = 50
-            
-            """
 
     #attack func
     def attack(self, surface, target):
@@ -218,8 +209,6 @@ class Fighter():
             self.temp_surface = surface
             self.temp_target = target
             self.attack_cooldown = len(self.animation_list[3]) * 100 // 60
-            #attacking_rect = pygame.Rect(self.rect.centerx - (2 * self.rect.width * self.flip), self.rect.y, 2 * self.rect.width, self.rect.height)
-
 
     def check_attack_collision(self, surface, target):
         self.attack_sound.play()
@@ -232,16 +221,9 @@ class Fighter():
 
         attacking_rect = pygame.Rect(attack_x, self.rect.y, sword_range, self.rect.height)
 
-
         if attacking_rect.colliderect(target.rect):
             target.health -= 50
             target.hit = True
-
-        
-
-
-
-        #pygame.draw.rect(surface, (0, 255, 0), attacking_rect)
     
     def update_action(self, new_action):
         #check if the new action is different to the previous one
@@ -313,27 +295,15 @@ class BehaviorTracker:
             return "far"
 
     def update_behavior_counters(self, action):
-<<<<<<< HEAD
-        """Update behavior pattern counters with more sensitive triggers"""
-        if "attack" in action:
-            self.consecutive_attacks += 1
-            self.consecutive_jumps = 0
-            # More sensitive: 2 instead of 3 consecutive attacks
-=======
         """Update behavior pattern counters"""
         if "attack" in action:
             self.consecutive_attacks += 1
             self.consecutive_jumps = 0
->>>>>>> a44fefe (Final Build)
             if self.consecutive_attacks >= 2:
                 self.counters['aggressive'] += 1
         elif action == "jump":
             self.consecutive_jumps += 1
             self.consecutive_attacks = 0
-<<<<<<< HEAD
-            # More sensitive: 1 instead of 2 consecutive jumps
-=======
->>>>>>> a44fefe (Final Build)
             if self.consecutive_jumps >= 1:
                 self.counters['jump_happy'] += 1
         else:
@@ -341,11 +311,7 @@ class BehaviorTracker:
             self.consecutive_jumps = 0
 
     def get_dominant_behavior(self):
-<<<<<<< HEAD
-        """Identify the player's dominant behavior pattern with more sensitive thresholds"""
-=======
         """Identify the player's dominant behavior pattern"""
->>>>>>> a44fefe (Final Build)
         if not self.action_history:
             return "neutral"
             
@@ -354,16 +320,6 @@ class BehaviorTracker:
         jump_count = sum(1 for action in recent_actions if action == "jump")
         move_count = sum(1 for action in recent_actions if action == "move")
         
-<<<<<<< HEAD
-        # More sensitive analysis patterns
-        if attack_count >= 4:  # Reduced from 6
-            return "aggressive"
-        elif jump_count >= 3:  # Reduced from 4
-            return "jump_heavy"
-        elif move_count >= 6:  # Added defensive movement pattern
-            return "defensive"
-        elif self.counters['counter_heavy'] > 2:  # Reduced from 3
-=======
         if attack_count >= 4:
             return "aggressive"
         elif jump_count >= 3:
@@ -371,7 +327,6 @@ class BehaviorTracker:
         elif move_count >= 6:
             return "defensive"
         elif self.counters['counter_heavy'] > 2:
->>>>>>> a44fefe (Final Build)
             return "counter_focused"
         else:
             return "neutral"
@@ -390,337 +345,14 @@ class CPUFighter(Fighter):
     def __init__(self, player, x, y, flip, data, sprite_sheet, animation_steps, attack_fx, jump_fx):
         super().__init__(player, x, y, flip, data, sprite_sheet, animation_steps, attack_fx, jump_fx)
         
-<<<<<<< HEAD
-        # Enhanced AI state management with MORE AGGRESSIVE neutral spacing
-        self.ai_state = "neutral"
-        self.state_timer = 0
-        self.decision_cooldown = 300  # Faster decision making (was 400)
-=======
         # Simplified aggressive AI state management
         self.ai_state = "maintain_distance"
         self.decision_cooldown = 200  # Fast decision making
->>>>>>> a44fefe (Final Build)
         self.last_decision_time = 0
         
         # Behavior tracking
         self.behavior_tracker = BehaviorTracker()
         
-<<<<<<< HEAD
-        # INCREASED neutral distances but more aggressive approach patterns
-        self.preferred_distance = 320  # INCREASED from 280 for better neutral spacing
-        self.attack_commitment_distance = 180  # INCREASED from 160 for more aggressive attacks
-        self.retreat_distance = 140  # Increased from 130
-        self.bait_distance = 250  # Increased from 220
-        self.spacing_tolerance = 50  # INCREASED tolerance for more natural movement
-        
-        # More aggressive baiting and movement patterns
-        self.bait_timer = 0
-        self.bait_cooldown = 0
-        self.movement_pattern = "neutral"
-        self.last_bait_success = False
-        self.whiff_punish_timer = 0
-        
-        # Health-based difficulty scaling - MORE AGGRESSIVE
-        self.initial_health = 100
-        self.difficulty_multiplier = 1.2  # Start more aggressive (was 1.0)
-        self.desperation_mode = False
-        self.health_thresholds = {
-            80: 1.4,   # INCREASED aggression at each threshold
-            60: 1.7,   
-            40: 2.0,   
-            20: 2.5    # Maximum aggression in desperation
-        }
-        
-        # Enhanced strategy profiles with AGGRESSIVE neutral spacing
-        self.strategies = {
-            "spacing_control": {
-                "preferred_range": 320,  # INCREASED neutral distance
-                "attack_range": 180,     # INCREASED attack commitment range
-                "retreat_threshold": 130,
-                "aggression": 0.7,       # INCREASED from 0.5
-                "bait_frequency": 0.4,   # INCREASED from 0.3
-                "reaction_time": 200,    # Faster reactions (was 250)
-                "patience": 0.7          # LESS patient (was 0.9)
-            },
-            "counter_punish": {
-                "preferred_range": 300,  # INCREASED 
-                "attack_range": 180,     # INCREASED
-                "retreat_threshold": 120,
-                "aggression": 0.8,       # INCREASED from 0.6
-                "counter_chance": 0.8,   # INCREASED from 0.7
-                "reaction_time": 150,    # Faster (was 200)
-                "whiff_punish": 0.9      # INCREASED from 0.8
-            },
-            "bait_heavy": {
-                "preferred_range": 330,  # INCREASED neutral distance
-                "attack_range": 170,     # INCREASED
-                "retreat_threshold": 140,
-                "aggression": 0.6,       # INCREASED from 0.4
-                "bait_frequency": 0.8,   # INCREASED from 0.6
-                "reaction_time": 180,    # Faster (was 220)
-                "fake_approach": 0.8     # INCREASED from 0.6
-            },
-            "pressure_waves": {
-                "preferred_range": 280,  # Increased from 220
-                "attack_range": 190,     # INCREASED from 170
-                "retreat_threshold": 110,
-                "aggression": 0.9,       # INCREASED from 0.7
-                "wave_intensity": 0.7,   # INCREASED from 0.5
-                "reaction_time": 120,    # Faster (was 150)
-                "commitment": 0.8        # INCREASED from 0.6
-            },
-            "desperation": {
-                "preferred_range": 220,  # Increased from 180
-                "attack_range": 200,     # INCREASED from 180
-                "retreat_threshold": 100,
-                "aggression": 1.0,       # Maximum aggression
-                "reaction_time": 80,     # Fastest reactions (was 100)
-                "all_or_nothing": 0.9    # INCREASED from 0.8
-            }
-        }
-        
-        self.current_strategy = "spacing_control"
-        self.adaptation_timer = 0
-        self.adaptation_interval = 4000  # Faster adaptation (was 5000)
-        
-        # Advanced timing and reads
-        self.pattern_recognition = defaultdict(int)
-        self.player_habits = {
-            'approaches_after_jump': 0,
-            'attacks_after_movement': 0,
-            'retreats_when_pressured': 0,
-            'button_mashes': 0
-        }
-        
-        # More aggressive movement state
-        self.current_movement_goal = "maintain_distance"
-        self.movement_commitment = 0
-        self.fake_approach_timer = 0
-
-    def calculate_ideal_distance(self, target):
-        """Calculate the ideal distance with IMPROVED neutral spacing"""
-        strategy = self.strategies[self.current_strategy]
-        base_distance = strategy.get("preferred_range", 320)  # Higher default
-        
-        # Adjust based on target's state - MORE AGGRESSIVE positioning
-        if target.attacking:
-            return max(base_distance + 40, 300)  # Less retreat when they attack (was +60, 280)
-        elif target.jump:
-            return base_distance - 50  # Get MUCH closer for anti-air (was -30)
-        elif target.running:
-            return base_distance + 20  # Less space when they're mobile (was +40)
-        else:
-            return base_distance
-
-    def should_commit_to_attack(self, target, distance):
-        """Determine if it's safe to commit to an attack - MORE AGGRESSIVE"""
-        strategy = self.strategies[self.current_strategy]
-        
-        # MORE AGGRESSIVE distance check
-        if distance > strategy.get("attack_range", 180):  # Increased range
-            return False
-            
-        # More willing to attack even if target is attacking
-        if target.attacking and random.random() > strategy.get("counter_chance", 0.5):  # Increased from 0.3
-            return False
-            
-        # Consider target's state - MORE AGGRESSIVE
-        if target.jump and distance > 150:  # Increased threshold from 120
-            return True
-            
-        # Consider our own state and cooldowns
-        if self.attack_cooldown > 0:
-            return False
-            
-        # Apply difficulty multiplier with HIGHER base aggression
-        aggression = strategy.get("aggression", 0.7) * self.difficulty_multiplier  # Higher base
-        return random.random() < aggression  # Removed 0.8 conservation factor
-
-    def make_decision(self, target, distance):
-        """Enhanced decision making with MORE AGGRESSIVE spacing priority"""
-        strategy = self.strategies[self.current_strategy]
-        current_time = pygame.time.get_ticks()
-        
-        # Update difficulty based on health
-        self.update_difficulty_from_health()
-        
-        # Calculate ideal positioning
-        ideal_distance = self.calculate_ideal_distance(target)
-        distance_error = distance - ideal_distance
-        
-        # Priority 1: Punish whiffed attacks - MORE AGGRESSIVE
-        if self.whiff_punish_timer > 0:
-            self.whiff_punish_timer -= 16
-            if target.attacking and distance < 200:  # INCREASED threshold from 170
-                return "whiff_punish"
-        
-        # Priority 2: Counter attack opportunities - MORE AGGRESSIVE
-        if target.attacking and distance < strategy.get("retreat_threshold", 140):  # Increased threshold
-            counter_chance = strategy.get("counter_chance", 0.6) * self.difficulty_multiplier  # Higher base, removed 0.8 multiplier
-            if random.random() < counter_chance:
-                return "counter_attack"
-            else:
-                return "defensive_retreat"
-        
-        # Priority 3: Maintain ideal spacing - MORE TOLERANT of distance
-        if abs(distance_error) > self.spacing_tolerance:
-            if distance_error > 100:  # INCREASED threshold from 80 - too far
-                return "aggressive_approach"  # NEW more aggressive approach
-            elif distance_error < -80:  # INCREASED threshold from -60 - too close
-                return "create_space"
-        
-        # Priority 4: Baiting actions - MORE FREQUENT
-        bait_action = self.plan_baiting_action(target, distance)
-        if bait_action:
-            self.bait_cooldown = random.randint(1000, 2000)  # SHORTER cooldown (was 1500-3000)
-            return bait_action
-        
-        # Priority 5: Attack commitment - MORE AGGRESSIVE
-        if self.should_commit_to_attack(target, distance) and distance < 200:  # INCREASED from 160
-            return "committed_attack"
-        
-        # Priority 6: Proactive neutral positioning - MORE AGGRESSIVE
-        if distance < ideal_distance - 60:  # INCREASED threshold from -50
-            return "maintain_space"
-        elif distance > ideal_distance + 100:  # INCREASED threshold from +80
-            return "proactive_approach"  # NEW more aggressive approach
-        
-        return "aggressive_neutral"  # NEW more aggressive neutral
-
-    def execute_action(self, decision, target, surface, screen_width):
-        """Execute actions with MORE AGGRESSIVE movement and BETTER neutral spacing"""
-        dx = 0
-        strategy = self.strategies[self.current_strategy]
-        current_distance = abs(self.rect.centerx - target.rect.centerx)
-        
-        # Apply difficulty multiplier to movement speed - FASTER base speed
-        base_speed = 5  # INCREASED from 4
-        speed_multiplier = min(1.5, 1.0 + (self.difficulty_multiplier - 1.0) * 0.3)  # Higher multiplier
-        adjusted_speed = int(base_speed * speed_multiplier)
-        
-        if decision == "close_distance" or decision == "aggressive_approach":
-            # MORE AGGRESSIVE controlled approach
-            approach_speed = 5 if current_distance > 350 else 4  # INCREASED speeds
-            dx = approach_speed if self.rect.centerx < target.rect.centerx else -approach_speed
-            self.running = True
-            self.movement_pattern = "approach"
-            
-        elif decision == "proactive_approach":
-            # NEW: More proactive approaching
-            approach_speed = 4
-            dx = approach_speed if self.rect.centerx < target.rect.centerx else -approach_speed
-            self.running = True
-            self.movement_pattern = "approach"
-            
-        elif decision == "create_space":
-            # Quick but measured retreat
-            retreat_speed = adjusted_speed
-            dx = -retreat_speed if self.rect.centerx < target.rect.centerx else retreat_speed
-            self.running = True
-            self.movement_pattern = "retreat"
-            
-        elif decision == "controlled_approach":
-            # FASTER measured approach (was 2 speed)
-            dx = 3 if self.rect.centerx < target.rect.centerx else -3
-            self.running = True
-            self.movement_pattern = "approach"
-            
-        elif decision == "maintain_space":
-            # Small adjustments to maintain ideal distance
-            adjust_speed = 2  # INCREASED from 1
-            dx = -adjust_speed if self.rect.centerx < target.rect.centerx else adjust_speed
-            self.running = True
-            self.movement_pattern = "maintain"
-            
-        elif decision == "dash_back_bait":
-            # Quick retreat to bait whiff
-            dx = -7 if self.rect.centerx < target.rect.centerx else 7  # INCREASED from -6
-            self.running = True
-            self.movement_pattern = "bait"
-            self.whiff_punish_timer = 600  # INCREASED timer from 500
-            
-        elif decision == "fake_approach":
-            # Step forward MORE AGGRESSIVELY then retreat
-            if self.fake_approach_timer <= 0:
-                self.fake_approach_timer = 350  # Shorter fake approach (was 400)
-                dx = 4 if self.rect.centerx < target.rect.centerx else -4  # INCREASED from 3
-            elif self.fake_approach_timer > 175:
-                dx = 2 if self.rect.centerx < target.rect.centerx else -2  # INCREASED from 1
-            else:
-                dx = -4 if self.rect.centerx < target.rect.centerx else 4  # INCREASED from -3
-                
-            self.fake_approach_timer -= 16
-            self.running = True
-            self.movement_pattern = "bait"
-            
-        elif decision == "whiff_punish":
-            # Quick punish after successful bait - MORE AGGRESSIVE
-            if not self.attacking and self.attack_cooldown == 0:
-                # MORE AGGRESSIVE range for punishing
-                if current_distance < 170:  # INCREASED from 140
-                    self.attack_type = 2  # Heavy attack for whiff punish
-                else:
-                    self.attack_type = 1  # Light attack to close distance
-                self.attack(surface, target)
-                self.movement_pattern = "punish"
-                
-        elif decision == "counter_attack":
-            # Counter attack with FASTER timing
-            if not self.attacking and self.attack_cooldown == 0:
-                # Faster counter timing
-                reaction_delay = max(60, int(150 / self.difficulty_multiplier))  # FASTER
-                if random.random() < 0.8:  # INCREASED success rate from 0.7
-                    self.attack_type = 1 if current_distance > 140 else 2  # INCREASED threshold from 120
-                    self.attack(surface, target)
-                    
-        elif decision == "committed_attack":
-            # MORE AGGRESSIVE attack positioning
-            if not self.attacking and self.attack_cooldown == 0:
-                # Step forward for better range
-                if current_distance > 150:  # INCREASED threshold from 130
-                    dx = 2 if self.rect.centerx < target.rect.centerx else -2  # INCREASED from 1
-                    
-                # Choose attack type based on situation
-                if target.jump:
-                    self.attack_type = 2  # Anti-air
-                elif current_distance < 140:  # INCREASED from 120
-                    self.attack_type = 2  # Close range heavy
-                else:
-                    self.attack_type = 1  # Mid range light
-                    
-                self.attack(surface, target)
-                self.movement_pattern = "attack"
-                
-        elif decision == "defensive_retreat":
-            # Safe retreat from pressure
-            retreat_speed = adjusted_speed + 2  # INCREASED urgency from +1
-            dx = -retreat_speed if self.rect.centerx < target.rect.centerx else retreat_speed
-            self.running = True
-            self.movement_pattern = "retreat"
-            
-        elif decision == "aggressive_neutral":
-            # NEW: More active neutral positioning
-            if random.random() < 0.4:  # INCREASED movement frequency from 0.2
-                adjust = random.choice([-2, -1, 0, 1, 2])  # Wider range of movement
-                dx = adjust
-                self.running = adjust != 0
-            self.movement_pattern = "neutral"
-            
-        elif decision == "neutral_positioning":
-            # More active positioning adjustments
-            if random.random() < 0.3:  # INCREASED movement frequency from 0.2
-                adjust = random.choice([-1, 0, 1])
-                dx = adjust
-                self.running = adjust != 0
-            self.movement_pattern = "neutral"
-            
-        else:  # Default neutral behavior
-            # More frequent small movements to stay active
-            if random.random() < 0.1:  # INCREASED from 0.05
-                dx = random.choice([-1, 0, 1])  # Removed extra zeros for more movement
-                self.running = dx != 0
-            self.movement_pattern = "neutral"
-=======
         # Aggressive distance-based strategy - 1/3 screen length neutral distance
         self.neutral_distance = 333  # 1/3 of 1000 pixel screen width
         self.attack_range = 200      # Range where CPU will attack
@@ -837,13 +469,32 @@ class CPUFighter(Fighter):
                 dx = random.choice([-1, 0, 1])
                 self.running = dx != 0
             self.movement_pattern = "ready"
->>>>>>> a44fefe (Final Build)
             
         return dx
 
     def move(self, screen_width, screen_height, surface, target, round_over):
+        # Always apply gravity (even when dead)
+        GRAVITY = 2
+        dy = 0
+        
+        # Apply gravity to CPU as well
+        self.vel_y += GRAVITY
+        dy = self.vel_y
+        
+        # Ground collision (always check, even when dead)
+        ground_level = screen_height - 21
+        if self.rect.bottom + dy >= ground_level:
+            self.rect.bottom = ground_level
+            self.vel_y = 0
+            self.jump = False
+            dy = 0
+        
+        # Only do AI logic if alive and round not over
         if round_over or not self.life:
             self.running = False
+            # Still apply vertical movement (falling)
+            if dy != 0:
+                self.rect.y += dy
             return
 
         current_time = pygame.time.get_ticks()
@@ -852,55 +503,15 @@ class CPUFighter(Fighter):
         # Face the target
         self.flip = self.rect.centerx > target.rect.centerx
         
-<<<<<<< HEAD
-        # FASTER decision speed based on difficulty
-        base_cooldown = self.decision_cooldown
-        adjusted_cooldown = max(150, int(base_cooldown / max(1.0, self.difficulty_multiplier)))  # Removed 0.8 multiplier
-        
-        if current_time - self.last_decision_time >= adjusted_cooldown:
-=======
         # Make decisions quickly
         if current_time - self.last_decision_time >= self.decision_cooldown:
->>>>>>> a44fefe (Final Build)
             self.ai_state = self.make_decision(target, distance)
             self.last_decision_time = current_time
             
         # Execute the current decision
         dx = self.execute_action(self.ai_state, target, surface, screen_width)
         
-<<<<<<< HEAD
-        # Enhanced movement and physics
-        GRAVITY = 2
-        dy = 0
-        
-        # Jump physics and air control
-=======
-        # Physics
-        GRAVITY = 2
-        dy = 0
-        
-        # Jump physics
->>>>>>> a44fefe (Final Build)
-        if self.jump or self.vel_y != 0:
-            self.vel_y += GRAVITY
-            dy = self.vel_y
-            
-            # Landing logic
-            ground_level = screen_height - 21
-            if self.rect.bottom + dy >= ground_level:
-                self.rect.bottom = ground_level
-                self.vel_y = 0
-                self.jump = False
-                dy = 0
-<<<<<<< HEAD
-                
-                # FASTER decision after landing
-                if distance < 220:  # INCREASED threshold from 180 for better neutral spacing
-                    self.last_decision_time = current_time - adjusted_cooldown + 50  # FASTER from +100
-=======
->>>>>>> a44fefe (Final Build)
-        
-        # Apply movement with screen bounds checking
+        # Apply movement with screen bounds checking (only when alive)
         if dx != 0:
             new_x = self.rect.x + dx
             self.rect.x = max(0, min(screen_width - self.rect.width, new_x))
@@ -910,17 +521,4 @@ class CPUFighter(Fighter):
         
         # Cooldown management
         if self.attack_cooldown > 0:
-<<<<<<< HEAD
             self.attack_cooldown -= 1
-            
-        # Update bait cooldown
-        if self.bait_cooldown > 0:
-            self.bait_cooldown -= 16
-            
-        # Adapt strategy MORE FREQUENTLY
-        if current_time - self.adaptation_timer > self.adaptation_interval:
-            self.adapt_strategy()
-            self.adaptation_timer = current_time
-=======
-            self.attack_cooldown -= 1
->>>>>>> a44fefe (Final Build)
